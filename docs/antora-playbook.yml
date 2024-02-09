@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/asciidoctor/asciidoctor-intellij-plugin/main/src/main/resources/jsonSchemas/antoraPlaybookSchema.json
 
 site:
-  title: Reqstool Python Hatch Plugin Documentation
+  title: Reqstool Hatch Plugin Documentation
   url: https://github.com/luftfartsverket/reqstool-python-hatch-plugin
   start_page: reqstool-python-hatch-plugin::index.adoc
 

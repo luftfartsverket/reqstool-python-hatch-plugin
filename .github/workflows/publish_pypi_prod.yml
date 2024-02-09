@@ -11,16 +11,15 @@ jobs:
   build:
     name: Reuse build
     uses: ./.github/workflows/build.yml
-  
 
   publish-to-pypi:
-    needs: 
+    needs:
       - check-release
       - build
     runs-on: ubuntu-latest
     environment:
       name: prod
-      url: https://pypi.org/p/reqstool-client
+      url: https://pypi.org/p/reqstool-python-hatch-plugin
     permissions:
       id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
     steps:

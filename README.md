@@ -9,7 +9,7 @@ To use the Reqstool Hatch Plugin, follow these steps:
 - Update your project dependencies in the `pyproject.toml` file and 
 ensure that the Reqstool Decorators' dependency is listed as follows;
 ``` 
-dependencies = ["reqstool-decorators == <version>"]
+dependencies = ["reqstool-python-decorators == <version>"]
 ```
 
 When you declare this in the pyproject.toml file, you are specifying the required versions for the dependency of the Reqstool Decorators. This ensures that the correct version of the dependencies are used when installing and running your project.
