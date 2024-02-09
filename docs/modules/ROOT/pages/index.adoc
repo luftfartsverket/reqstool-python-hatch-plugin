@@ -1,0 +1,7 @@
+= Reqstool Python Hatch Plugin
+
+include::description.adoc[]
+
+include::installation.adoc[]
+
+include::license.adoc[]
