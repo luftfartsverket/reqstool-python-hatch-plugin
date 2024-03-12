@@ -31,7 +31,7 @@ classifiers = [
 requires-python = ">=3.10"
 
 dependencies = [
-    "reqstool-python-decorators == 0.1.dev13", # This version should change when a proper relase is made. 
+    "reqstool-python-decorators == 0.0.1", 
     "ruamel.yaml==0.18.6",
     "hatchling>=1.20.0",
 ]
