@@ -2,7 +2,7 @@
 
 
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
-from reqstool_python_decorators.processors.decorator_processor import ProcessDecorator
+from reqstool_python_decorators.processors.decorator_processor import DecoratorProcessor
 
 
 class Decorator(BuildHookInterface):
@@ -56,5 +56,5 @@ class Decorator(BuildHookInterface):
         """
         path = self.get_config_path
 
-        process_decorator = ProcessDecorator()
-        process_decorator.process_decorated_data(path_to_python_files=path)
+        decorator_processor = DecoratorProcessor()
+        decorator_processor.process_decorated_data(path_to_python_files=path)
