@@ -35,10 +35,10 @@ The plugin can be configured through the `pyproject.toml` file. Configure plugin
 
 ```
 [tool.hatch.build.targets.wheel.hooks.decorators]
-dependencies = ["reqstool-hatch-plugin == <version>"]
+dependencies = ["reqstool-python-hatch-plugin == <version>"]
 path = ["src","tests"]
 
 ```
-It specifies that the reqstool-hatch-plugin is a dependency for the build process, and it should be of a specific version. 
+It specifies that the reqstool-python-hatch-plugin is a dependency for the build process, and it should be of a specific version. 
 
 Further it defines the paths where the plugin should be applied. In this case, it specifies that the plugin should be applied to files in the src and tests directories. 
