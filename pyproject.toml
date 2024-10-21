@@ -3,7 +3,7 @@ requires = ["hatchling", "hatch-vcs", "build", "twine"]
 build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
-addopts = ["-s", "--import-mode=importlib"]
+addopts = ["-s", "--import-mode=importlib", "--log-cli-level=DEBUG"]
 pythonpath = [".", "src", "tests"]
 testpaths = ["tests/unit"]
 
@@ -38,8 +38,6 @@ dependencies = [
 
 packages = [{ include = "reqstool_python_hatch_plugin", from = "src" }]
 
-[project.scripts]
-
 [project.entry-points.hatch]
 decorators = "reqstool_python_hatch_plugin.hooks"
 
@@ -49,12 +47,15 @@ source = "vcs"
 [tool.hatch.version.raw-options]
 local_scheme = "no-local-version"
 
-[tool.hatch.envs.test]
-dependencies = ["pytest==8.3.3", "pytest-sugar==1.0.0", "pytest-cov==5.0.0"]
-
-[tool.hatch.envs.lint]
-detached = true
-dependencies = ["black==24.10.0", "flake8==7.1.1", "flake8-pyproject==1.2.3"]
+[tool.hatch.envs.dev]
+dependencies = [
+    "black==24.10.0",
+    "flake8-pyproject==1.2.3",
+    "flake8==7.1.1",
+    "pytest-cov==5.0.0",
+    "pytest-sugar==1.0.0",
+    "pytest==8.3.3",
+]
 
 [tool.black]
 line-length = 120
