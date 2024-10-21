@@ -2,10 +2,12 @@
 
 import os
 import tarfile
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
+from hatchling.builders.plugin.interface import BuilderInterface
 from reqstool_python_decorators.processors.decorator_processor import DecoratorProcessor
 
 
@@ -44,9 +46,7 @@ class ReqstoolBuildHook(BuildHookInterface):
             version (str): The version of the project.
             build_data (dict): The build-related data.
         """
-        self.app.display_info(f"reqstool plugin {self.versions} loaded")
-
-        self.app.display_info(f"build_data {self.build_data}")
+        self.app.display_debug(f"reqstool plugin {ReqstoolBuildHook.get_version()} loaded")
 
         self._create_annotations_file()
         self._create_tar_gz_artifact()
@@ -55,13 +55,13 @@ class ReqstoolBuildHook(BuildHookInterface):
         """
         Generates the annotations.yml file by processing the reqstool decorators.
         """
-        self.app.display_info("parsing reqstool decorators")
+        self.app.display_debug("parsing reqstool decorators")
         sources = self.config.get("sources", [])
 
         decorator_processor = DecoratorProcessor()
         decorator_processor.process_decorated_data(path_to_python_files=sources)
 
-        self.app.display_info("generated build/reqstool/annotations.yml")
+        self.app.display_debug("generated build/reqstool/annotations.yml")
 
     def _create_tar_gz_artifact(self) -> None:
         """
@@ -78,23 +78,37 @@ class ReqstoolBuildHook(BuildHookInterface):
         file_annotations_yml_file: Path = Path(reqstool_output_directory, self.INPUT_FILE_ANNOTATIONS_YML)
 
         # Define output ZIP file
+
         dist_dir: Path = Path(self.directory)
-        tar_gz_file: Path = Path(dist_dir, "reqstool-artifact.tar.gz")
 
-        with tarfile.open(tar_gz_file, "w:gz") as tar:
+        tar_gz_file: Path = Path(
+            dist_dir,
+            f"{BuilderInterface.normalize_file_name_component(self.metadata.core.raw_name)}-"
+            f"{self.metadata.version}-reqstool.tar.gz",
+        )
 
-            self.add_file_to_tar_gz(tar=tar, file=file_requirements_yml)
-            self.add_file_to_tar_gz(tar=tar, file=file_software_verification_cases_yml)
-            self.add_file_to_tar_gz(tar=tar, file=file_manual_verification_results_yml)
-            self.add_file_to_tar_gz(tar=tar, file=file_annotations_yml_file)
-            self.add_file_to_tar_gz(tar=tar, file=junit_xml_file, location=self.ARCHIVE_OUTPUT_DIR_TEST_RESULTS)
+        # Open the tar file directly with gzip compression
+        with tarfile.open(tar_gz_file, "w:gz", format=tarfile.PAX_FORMAT) as archive:
+            self.add_file_to_tar_gz(tar=archive, file=file_requirements_yml)
+            self.add_file_to_tar_gz(tar=archive, file=file_software_verification_cases_yml)
+            self.add_file_to_tar_gz(tar=archive, file=file_manual_verification_results_yml)
+            self.add_file_to_tar_gz(tar=archive, file=file_annotations_yml_file)
+            self.add_file_to_tar_gz(tar=archive, file=junit_xml_file, location=self.ARCHIVE_OUTPUT_DIR_TEST_RESULTS)
 
-        self.app.display_info(f"created {tar_gz_file}")
+        self.app.display_debug(f"created {tar_gz_file}")
         self.app.display_info(os.path.relpath(tar_gz_file, dist_dir.parent))
 
     def add_file_to_tar_gz(self, tar: tarfile.TarFile, file: Path, location: str = None):
         if os.path.exists(file):
             arcname: Optional[Path] = os.path.basename(file) if not location else Path(location, os.path.basename(file))
-            self.app.display_info(f"adding {file}")
+            self.app.display_debug(f"adding {file}")
 
             tar.add(name=file, arcname=arcname, recursive=False)
+
+    def get_version() -> str:
+        try:
+            ver: str = f"{version('reqstool-python-hatch-plugin')}"
+        except PackageNotFoundError:
+            ver: str = "package-not-found"
+
+        return ver
