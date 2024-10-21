@@ -1,5 +1,6 @@
 # Copyright © LFV
 
+import os
 import tarfile
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -29,6 +30,8 @@ class ReqstoolBuildHook(BuildHookInterface):
     INPUT_PATH_DATASET: str = "reqstool"
     OUTPUT_DIR_REQSTOOL: str = "build/reqstool"
 
+    ARCHIVE_OUTPUT_DIR_TEST_RESULTS: str = "test_results"
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.__config_path: Optional[str] = None
@@ -41,7 +44,9 @@ class ReqstoolBuildHook(BuildHookInterface):
             version (str): The version of the project.
             build_data (dict): The build-related data.
         """
-        self.app.display_info(f"reqstool plugin {version} loaded")
+        self.app.display_info(f"reqstool plugin {self.versions} loaded")
+
+        self.app.display_info(f"build_data {self.build_data}")
 
         self._create_annotations_file()
         self._create_tar_gz_artifact()
@@ -68,30 +73,28 @@ class ReqstoolBuildHook(BuildHookInterface):
         reqstool_output_directory: Path = Path(self.config.get("output_directory", self.OUTPUT_DIR_REQSTOOL))
 
         file_requirements_yml: Path = Path(dataset_path, self.INPUT_FILE_REQUIREMENTS_YML)
-        file_software_verification_cases_ymlPath = Path(dataset_path, self.INPUT_FILE_SOFTWARE_VERIFICATION_CASES_YML)
-        file_manual_verification_results_ymlPath = Path(dataset_path, self.INPUT_FILE_MANUAL_VERIFICATION_RESULTS_YML)
-        file_annotations_yml_filePath = Path(self.directory, self.INPUT_FILE_ANNOTATIONS_YML)
+        file_software_verification_cases_yml: Path = Path(dataset_path, self.INPUT_FILE_SOFTWARE_VERIFICATION_CASES_YML)
+        file_manual_verification_results_yml: Path = Path(dataset_path, self.INPUT_FILE_MANUAL_VERIFICATION_RESULTS_YML)
+        file_annotations_yml_file: Path = Path(reqstool_output_directory, self.INPUT_FILE_ANNOTATIONS_YML)
 
         # Define output ZIP file
-        tar_gz_file: Path = Path(self.directory, "reqstool-artifactg.tar.gz")
+        dist_dir: Path = Path(self.directory)
+        tar_gz_file: Path = Path(dist_dir, "reqstool-artifact.tar.gz")
 
         with tarfile.open(tar_gz_file, "w:gz") as tar:
-            # Add files to the ZIP archive
-            if os.path.exists(requirements_annotations_file):
-                self.app.display_info(f"adding {requirements_annotations_file}")
-                tar.add(requirements_annotations_file, os.path.basename(requirements_annotations_file))
 
-            if os.path.exists(dataset_path):
-                for root, _, files in os.walk(dataset_path):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        tar.add(file_path, os.path.relpath(file_path, dataset_path))
+            self.add_file_to_tar_gz(tar=tar, file=file_requirements_yml)
+            self.add_file_to_tar_gz(tar=tar, file=file_software_verification_cases_yml)
+            self.add_file_to_tar_gz(tar=tar, file=file_manual_verification_results_yml)
+            self.add_file_to_tar_gz(tar=tar, file=file_annotations_yml_file)
+            self.add_file_to_tar_gz(tar=tar, file=junit_xml_file, location=self.ARCHIVE_OUTPUT_DIR_TEST_RESULTS)
 
-            # Include junit report directory
-            if os.path.exists(junit_reports_dir):
-                for root, _, files in os.walk(junit_reports_dir):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        tar.add(file_path, os.path.relpath(file_path, junit_reports_dir))
+        self.app.display_info(f"created {tar_gz_file}")
+        self.app.display_info(os.path.relpath(tar_gz_file, dist_dir.parent))
 
-        print(f"created {tar_gz_file}")
+    def add_file_to_tar_gz(self, tar: tarfile.TarFile, file: Path, location: str = None):
+        if os.path.exists(file):
+            arcname: Optional[Path] = os.path.basename(file) if not location else Path(location, os.path.basename(file))
+            self.app.display_info(f"adding {file}")
+
+            tar.add(name=file, arcname=arcname, recursive=False)
