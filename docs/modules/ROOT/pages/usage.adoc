@@ -5,8 +5,8 @@
 
 The plugin can be configured through the `pyproject.toml` file. Configure plugin in `pyproject.toml`as follows;
 
-```
-[tool.hatch.build.targets.wheel.hooks.decorators]
+```toml
+[tool.hatch.build.hooks.reqstool_decorators]
 dependencies = ["reqstool-python-hatch-plugin == <version>"]
 path = ["src","tests"]
 

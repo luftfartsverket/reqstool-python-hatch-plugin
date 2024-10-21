@@ -34,7 +34,7 @@ When you declare this in the pyproject.toml file, you are specifying the require
 The plugin can be configured through the `pyproject.toml` file. Configure plugin in `pyproject.toml`as follows;
 
 ```
-[tool.hatch.build.targets.wheel.hooks.decorators]
+[tool.hatch.build.hooks.reqstool_decorators]
 dependencies = ["reqstool-python-hatch-plugin == <version>"]
 path = ["src","tests"]
 
