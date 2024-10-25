@@ -35,7 +35,7 @@ class ReqstoolBuildHook(BuildHookInterface):
     INPUT_FILE_ANNOTATIONS_YML: str = "annotations.yml"
     INPUT_PATH_DATASET: str = "reqstool"
     OUTPUT_DIR_REQSTOOL: str = "build/reqstool"
-    OUTPUT_SDIST_REQSTOOL_YML: str = "reqstool_index.yml"
+    OUTPUT_SDIST_REQSTOOL_YML: str = "reqstool_config.yml"
 
     ARCHIVE_OUTPUT_DIR_TEST_RESULTS: str = "test_results"
 
@@ -84,7 +84,6 @@ class ReqstoolBuildHook(BuildHookInterface):
         yaml_data = {
             "language": "python",
             "build": "hatch",
-            "version": self.metadata.version,
             "resources": {
                 "requirements": str(Path(dataset_path, self.INPUT_FILE_REQUIREMENTS_YML)),
                 "software_verification_cases": str(Path(dataset_path, self.INPUT_FILE_SOFTWARE_VERIFICATION_CASES_YML)),
@@ -99,10 +98,12 @@ class ReqstoolBuildHook(BuildHookInterface):
         reqstool_yml = io.BytesIO()
         # Write the YAML_LANGUAGE_SERVER value as the first line
         reqstool_yml.write(f"{self.YAML_LANGUAGE_SERVER}\n".encode("utf-8"))
+        reqstool_yml.write(f"# version: {self.metadata.version}\n".encode("utf-8"))
+
         yaml.dump(yaml_data, reqstool_yml)
         reqstool_yml.seek(0)
 
-        self.app.display_debug(f"reqstool index: {yaml_data}")
+        self.app.display_debug(f"reqstool config {yaml_data}")
 
         # Path to the existing tar.gz file (constructed from metadata)
         original_tar_gz_file = os.path.join(
