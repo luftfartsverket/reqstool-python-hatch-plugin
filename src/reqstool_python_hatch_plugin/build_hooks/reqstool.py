@@ -139,7 +139,9 @@ class ReqstoolBuildHook(BuildHookInterface):
                 f_out.writelines(f_in)
 
         dist_dir: Path = Path(self.directory)
-        self.app.display_info(f"added reqstool_index.yml to {os.path.relpath(original_tar_gz_file, dist_dir.parent)}")
+        self.app.display_info(
+            f"added {self.OUTPUT_SDIST_REQSTOOL_YML} to {os.path.relpath(original_tar_gz_file, dist_dir.parent)}"
+        )
 
     def get_version() -> str:
         try:
