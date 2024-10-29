@@ -98,7 +98,7 @@ class ReqstoolBuildHook(BuildHookInterface):
         resources: Dict[str, str] = {}
 
         if not os.path.exists(requirements_file):
-            msg: str = f"[reqstool] added to {self.OUTPUT_SDIST_REQSTOOL_YML}: {str(requirements_file)}"
+            msg: str = f"[reqstool] missing mandatory {self.INPUT_FILE_REQUIREMENTS_YML}: {requirements_file}"
             raise RuntimeError(msg)
 
         resources["requirements"] = str(requirements_file)
