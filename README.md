@@ -27,8 +27,6 @@ When you declare this in the pyproject.toml file, you are specifying the require
 
 ## Usage
 
-
-
 ### Configuration
 
 The plugin can be configured through the `pyproject.toml` file. Configure plugin in `pyproject.toml`as follows;
@@ -37,9 +35,9 @@ The plugin can be configured through the `pyproject.toml` file. Configure plugin
 [tool.hatch.build.hooks.reqstool]
 dependencies = ["reqstool-python-hatch-plugin == <version>"]
 sources = ["src", "tests"]
-junit_xml_file = "build/junit.xml"
-dataset_path = "docs/reqstool"
+dataset_directory = "docs/reqstool"
 output_directory = "build/reqstool"
+test_results = ["build/**/junit.xml"]
 ```
 
 It specifies that the reqstool-python-hatch-plugin is a dependency for the build process, and it should be of a specific version. 

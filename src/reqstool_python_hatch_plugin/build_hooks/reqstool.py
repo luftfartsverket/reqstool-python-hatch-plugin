@@ -7,7 +7,7 @@ import tarfile
 import tempfile
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 from hatchling.builders.plugin.interface import BuilderInterface
@@ -28,12 +28,18 @@ class ReqstoolBuildHook(BuildHookInterface):
 
     PLUGIN_NAME: str = "reqstool"
 
+    CONFIG_SOURCES = "sources"
+    CONFIG_DATASET_DIRECTORY = "dataset_directory"
+    CONFIG_OUTPUT_DIRECTORY = "output_directory"
+    CONFIG_TEST_RESULTS: str = "test_results"
+
     INPUT_FILE_REQUIREMENTS_YML: str = "requirements.yml"
     INPUT_FILE_SOFTWARE_VERIFICATION_CASES_YML: str = "software_verification_cases.yml"
     INPUT_FILE_MANUAL_VERIFICATION_RESULTS_YML: str = "manual_verification_results.yml"
     INPUT_FILE_JUNIT_XML: str = "build/junit.xml"
     INPUT_FILE_ANNOTATIONS_YML: str = "annotations.yml"
-    INPUT_PATH_DATASET: str = "reqstool"
+    INPUT_DIR_DATASET: str = "reqstool"
+
     OUTPUT_DIR_REQSTOOL: str = "build/reqstool"
     OUTPUT_SDIST_REQSTOOL_YML: str = "reqstool_config.yml"
 
@@ -53,7 +59,7 @@ class ReqstoolBuildHook(BuildHookInterface):
             version (str): The version of the project.
             build_data (dict): The build-related data.
         """
-        self.app.display_info(f"reqstool plugin {ReqstoolBuildHook.get_version()} loaded")
+        self.app.display_info(f"[reqstool] plugin {ReqstoolBuildHook.get_version()} loaded")
 
         self._create_annotations_file()
 
@@ -66,44 +72,68 @@ class ReqstoolBuildHook(BuildHookInterface):
         """
         Generates the annotations.yml file by processing the reqstool decorators.
         """
-        self.app.display_debug("parsing reqstool decorators")
-        sources = self.config.get("sources", [])
+        self.app.display_debug("[reqstool] parsing reqstool decorators")
+        sources = self.config.get(self.CONFIG_SOURCES, [])
+
+        reqstool_output_directory: Path = Path(self.config.get(self.CONFIG_OUTPUT_DIRECTORY, self.OUTPUT_DIR_REQSTOOL))
+        annotations_file: Path = Path(reqstool_output_directory, self.INPUT_FILE_ANNOTATIONS_YML)
 
         decorator_processor = DecoratorProcessor()
-        decorator_processor.process_decorated_data(path_to_python_files=sources)
+        decorator_processor.process_decorated_data(path_to_python_files=sources, output_file=annotations_file)
 
-        self.app.display_debug("generated build/reqstool/annotations.yml")
+        self.app.display_debug(f"[reqstool] generated {str(annotations_file)}")
 
     def _append_to_sdist_tar_gz(self, version: str, build_data: Dict[str, Any], artifact_path: str) -> None:
         """
         Appends to sdist containing the annotations file and other necessary data.
         """
-        dataset_path: Path = Path(self.config.get("dataset_path", self.INPUT_PATH_DATASET))
-        reqstool_output_directory: Path = Path(self.config.get("output_directory", self.OUTPUT_DIR_REQSTOOL))
+        dataset_directory: Path = Path(self.config.get(self.CONFIG_DATASET_DIRECTORY, self.INPUT_DIR_DATASET))
+        reqstool_output_directory: Path = Path(self.config.get(self.CONFIG_OUTPUT_DIRECTORY, self.OUTPUT_DIR_REQSTOOL))
+        test_result_patterns: List[str] = self.config.get(self.CONFIG_TEST_RESULTS, [])
+        requirements_file: Path = Path(dataset_directory, self.INPUT_FILE_REQUIREMENTS_YML)
+        svcs_file: Path = Path(dataset_directory, self.INPUT_FILE_SOFTWARE_VERIFICATION_CASES_YML)
+        mvrs_file: Path = Path(dataset_directory, self.INPUT_FILE_MANUAL_VERIFICATION_RESULTS_YML)
+        annotations_file: Path = Path(reqstool_output_directory, self.INPUT_FILE_ANNOTATIONS_YML)
 
-        yaml_data = {
-            "language": "python",
-            "build": "hatch",
-            "resources": {
-                "requirements": str(Path(dataset_path, self.INPUT_FILE_REQUIREMENTS_YML)),
-                "software_verification_cases": str(Path(dataset_path, self.INPUT_FILE_SOFTWARE_VERIFICATION_CASES_YML)),
-                "manual_verification_results": str(Path(dataset_path, self.INPUT_FILE_MANUAL_VERIFICATION_RESULTS_YML)),
-                "annotations": str(Path(reqstool_output_directory, self.INPUT_FILE_ANNOTATIONS_YML)),
-                "test_results": [str(Path(self.config.get("junit_xml_file", self.INPUT_FILE_JUNIT_XML)))],
-            },
-        }
+        resources: Dict[str, str] = {}
+
+        if not os.path.exists(requirements_file):
+            msg: str = f"[reqstool] added to {self.OUTPUT_SDIST_REQSTOOL_YML}: {str(requirements_file)}"
+            raise RuntimeError(msg)
+
+        resources["requirements"] = str(requirements_file)
+        self.app.display_debug(f"[reqstool] added to {self.OUTPUT_SDIST_REQSTOOL_YML}: {requirements_file}")
+
+        if os.path.exists(svcs_file):
+            resources["software_verification_cases"] = str(svcs_file)
+            self.app.display_debug(f"[reqstool] added to {self.OUTPUT_SDIST_REQSTOOL_YML}: {svcs_file}")
+
+        if os.path.exists(mvrs_file):
+            resources["manual_verification_results"] = str(mvrs_file)
+            self.app.display_debug(f"[reqstool] added to {self.OUTPUT_SDIST_REQSTOOL_YML}: {mvrs_file}")
+
+        if os.path.exists(annotations_file):
+            resources["annotations"] = str(annotations_file)
+            self.app.display_debug(f"[reqstool] added to {self.OUTPUT_SDIST_REQSTOOL_YML}: {annotations_file}")
+
+        if test_result_patterns:
+            resources["test_results"] = str(test_result_patterns)
+            self.app.display_debug(
+                f"[reqstool] added test_results to {self.OUTPUT_SDIST_REQSTOOL_YML}: {test_result_patterns}"
+            )
+
+        reqstool_yaml_data = {"language": "python", "build": "hatch", "resources": resources}
 
         yaml = YAML()
         yaml.default_flow_style = False
-        reqstool_yml = io.BytesIO()
-        # Write the YAML_LANGUAGE_SERVER value as the first line
-        reqstool_yml.write(f"{self.YAML_LANGUAGE_SERVER}\n".encode("utf-8"))
-        reqstool_yml.write(f"# version: {self.metadata.version}\n".encode("utf-8"))
+        reqstool_yml_io = io.BytesIO()
+        reqstool_yml_io.write(f"{self.YAML_LANGUAGE_SERVER}\n".encode("utf-8"))
+        reqstool_yml_io.write(f"# version: {self.metadata.version}\n".encode("utf-8"))
 
-        yaml.dump(yaml_data, reqstool_yml)
-        reqstool_yml.seek(0)
+        self.app.display_debug(f"[reqstool] reqstool config {reqstool_yaml_data}")
 
-        self.app.display_debug(f"reqstool config {yaml_data}")
+        yaml.dump(reqstool_yaml_data, reqstool_yml_io)
+        reqstool_yml_io.seek(0)
 
         # Path to the existing tar.gz file (constructed from metadata)
         original_tar_gz_file = os.path.join(
@@ -112,14 +142,14 @@ class ReqstoolBuildHook(BuildHookInterface):
             f"-{self.metadata.version}.tar.gz",
         )
 
-        self.app.display_debug(f"tarball: {original_tar_gz_file}")
+        self.app.display_debug(f"[reqstool] tarball: {original_tar_gz_file}")
 
         # Step 1: Extract the original tar.gz file to a temporary directory
         with tempfile.NamedTemporaryFile(delete=True) as temp_tar_file:
 
             temp_tar_file = temp_tar_file.name  # Get the name of the temporary file
 
-            self.app.display_debug(f"temporary tar file: {temp_tar_file}")
+            self.app.display_debug(f"[reqstool] temporary tar file: {temp_tar_file}")
 
             # Extract the original tar.gz file
             with gzip.open(original_tar_gz_file, "rb") as f_in, open(temp_tar_file, "wb") as f_out:
@@ -131,8 +161,8 @@ class ReqstoolBuildHook(BuildHookInterface):
                     name=f"{BuilderInterface.normalize_file_name_component(self.metadata.core.raw_name)}-"
                     f"{self.metadata.version}/{self.OUTPUT_SDIST_REQSTOOL_YML}"
                 )
-                file_info.size = reqstool_yml.getbuffer().nbytes
-                archive.addfile(tarinfo=file_info, fileobj=reqstool_yml)
+                file_info.size = reqstool_yml_io.getbuffer().nbytes
+                archive.addfile(tarinfo=file_info, fileobj=reqstool_yml_io)
 
             # Step 3: Recompress the updated tar file back into the original .tar.gz format
             with open(temp_tar_file, "rb") as f_in, gzip.open(original_tar_gz_file, "wb") as f_out:
@@ -140,7 +170,7 @@ class ReqstoolBuildHook(BuildHookInterface):
 
         dist_dir: Path = Path(self.directory)
         self.app.display_info(
-            f"added {self.OUTPUT_SDIST_REQSTOOL_YML} to {os.path.relpath(original_tar_gz_file, dist_dir.parent)}"
+            f"[reqstool] added {self.OUTPUT_SDIST_REQSTOOL_YML} to {os.path.relpath(original_tar_gz_file, dist_dir.parent)}"
         )
 
     def get_version() -> str:
