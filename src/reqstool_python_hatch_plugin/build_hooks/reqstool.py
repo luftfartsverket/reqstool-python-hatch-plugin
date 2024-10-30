@@ -117,7 +117,7 @@ class ReqstoolBuildHook(BuildHookInterface):
             self.app.display_debug(f"[reqstool] added to {self.OUTPUT_SDIST_REQSTOOL_YML}: {annotations_file}")
 
         if test_result_patterns:
-            resources["test_results"] = str(test_result_patterns)
+            resources["test_results"] = test_result_patterns
             self.app.display_debug(
                 f"[reqstool] added test_results to {self.OUTPUT_SDIST_REQSTOOL_YML}: {test_result_patterns}"
             )
