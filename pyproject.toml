@@ -2,22 +2,6 @@
 requires = ["hatchling", "hatch-vcs", "build", "twine"]
 build-backend = "hatchling.build"
 
-[tool.pytest.ini_options]
-addopts = [
-    "-rsxX",
-    "-s",
-    "--import-mode=importlib",
-    "--log-cli-level=DEBUG",
-    '-m not slow or not integration',
-]
-pythonpath = [".", "src", "tests"]
-testpaths = ["tests"]
-markers = [
-    "flaky: tests that can randomly fail through no change to the code",
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: tests that require external resources",
-]
-
 [project]
 name = "reqstool-python-hatch-plugin"
 dynamic = ["version"]
@@ -66,6 +50,23 @@ dependencies = [
     "pytest-cov==6.0.0",
     "pytest-sugar==1.0.0",
     "pytest==8.3.3",
+]
+
+
+[tool.pytest.ini_options]
+addopts = [
+    "-rsxX",
+    "-s",
+    "--import-mode=importlib",
+    "--log-cli-level=DEBUG",
+    '-m not slow or not integration',
+]
+pythonpath = [".", "src", "tests"]
+testpaths = ["tests"]
+markers = [
+    "flaky: tests that can randomly fail through no change to the code",
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: tests that require external resources",
 ]
 
 [tool.black]
