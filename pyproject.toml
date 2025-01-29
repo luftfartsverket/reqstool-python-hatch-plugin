@@ -44,7 +44,7 @@ local_scheme = "no-local-version"
 
 [tool.hatch.envs.dev]
 dependencies = [
-    "black==24.10.0",
+    "black==25.1.0",
     "flake8-pyproject==1.2.3",
     "flake8==7.1.1",
     "pytest-cov==6.0.0",
