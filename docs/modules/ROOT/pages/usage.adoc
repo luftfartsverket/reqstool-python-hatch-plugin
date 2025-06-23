@@ -9,8 +9,8 @@ The plugin can be configured through the `pyproject.toml` file. Configure plugin
 [tool.hatch.build.hooks.reqstool]
 dependencies = ["reqstool-python-hatch-plugin == <version>"]
 sources = ["src", "tests"]
-junit_xml_file = "build/junit.xml"
-dataset_path = "docs/reqstool"
+test_results = "build/junit.xml"
+dataset_directory = "docs/reqstool"
 output_directory = "build/reqstool"
 ```
 It specifies that the reqstool-python-hatch-plugin is a dependency for the build process, and it should be of a specific version. 
