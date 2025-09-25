@@ -27,7 +27,7 @@ requires-python = ">=3.10"
 
 dependencies = [
     "reqstool-python-decorators==0.0.8",
-    "ruamel.yaml==0.18.14",
+    "ruamel.yaml==0.18.15",
     "hatchling>=1.20.0",
 ]
 
